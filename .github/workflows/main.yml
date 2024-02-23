@@ -1,0 +1,63 @@
+name: Angular CI/CD
+
+on:
+  push:
+    branches:
+      - master  # or whichever branch you want to trigger the pipeline on
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Run on a Linux environment
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20.x'  # Change the Node.js version as per your requirement
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Angular App
+        run: npm run build --
+
+      - name: Build Docker Image
+        run: docker build -t angular-app:latest .
+
+      - name: Push Docker Image to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: poojithagopi/welcome-app
+          tags: latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest  # Run on a Linux environment
+    
+    steps:
+      - name: Check if container exists
+        run: |
+          CONTAINER_NAME="affectionate_wu"
+          echo "Checking for container: ${CONTAINER_NAME}"
+          docker ps -a
+          if docker ps -a --format '{{.Names}}' | grep -q "${CONTAINER_NAME}"; then
+            echo "Container ${CONTAINER_NAME} exists"
+          else
+            echo "Container ${CONTAINER_NAME} does not exist"
+            exit 1
+          fi
+
+      - name: Stop and remove container if it exists
+        run: |
+          docker stop affectionate_wu || true
+          docker rm affectionate_wu || true
+
+      - name: Pull Docker image
+        run: docker pull poojithagopi/angular-app:latest
+
+      - name: Deploy Docker Container
+        run: docker run -d -p 80:80 --name affectionate_wu angular-app:latest
