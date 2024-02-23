@@ -39,21 +39,7 @@ jobs:
     runs-on: ubuntu-latest  # Run on a Linux environment
     
     steps:
-      - name: Check if container exists
-        run: |
-          CONTAINER_NAME="affectionate_wu"
-          echo "Checking for container: ${CONTAINER_NAME}"
-          docker ps -a
-          if docker ps -a --format '{{.Names}}' | grep -q "${CONTAINER_NAME}"; then
-            echo "Container ${CONTAINER_NAME} exists"
-          else
-            echo "Container ${CONTAINER_NAME} does not exist"
-            exit 1
-          fi
-      - name: Stop and remove container if it exists
-        run: |
-          docker stop affectionate_wu || true
-          docker rm affectionate_wu || true
+    
       - name: Pull Docker image
         run: docker pull poojithagopi/angularpage:v1.0
 
