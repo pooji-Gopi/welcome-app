@@ -1,0 +1,47 @@
+name: Angular CI/CD
+
+on:
+  push:
+    branches:
+      - master  # or whichever branch you want to trigger the pipeline on
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Run on a Linux environment
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20.x'  # Change the Node.js version as per your requirement
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Angular App
+        run: npm run build --
+
+      - name: Build Docker Image
+        run: docker build -t poojithagopi/angularpage:v1.0 .
+
+      - name: Push Docker Image to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: poojithagopi/angularpage
+          tags: v1.0
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest  # Run on a Linux environment
+    
+    steps:
+    
+      - name: Pull Docker image
+        run: docker pull poojithagopi/angularpage:v1.0
+
+      - name: Deploy Docker Container
+        run: docker run -d -p 80:80 --name affectionate_wu poojithagopi/angularpage:v1.0
